@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Advanced OCR – Image & PDF to Editable Text</title>
+
+<!-- Tesseract.js for OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<!-- PDF.js for PDF page rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- Google AdSense Loader -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2708832535381203"
+     crossorigin="anonymous"></script>
+
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f8f9fb;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+  }
+  h1 {
+    font-size: 1.9rem;
+    margin-bottom: 20px;
+    color: #2b2b2b;
+  }
+  #drop-area {
+    border: 3px dashed #4b8df8;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 650px;
+    padding: 40px;
+    text-align: center;
+    background: white;
+    transition: background 0.3s, transform 0.2s;
+  }
+  #drop-area.dragover {
+    background: #e8f0fe;
+    transform: scale(1.02);
+  }
+  #fileElem {
+    display: none;
+  }
+  button, select {
+    background: #4b8df8;
+    border: none;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px 5px;
+    font-weight: 600;
+    transition: background 0.3s;
+  }
+  button:hover, select:hover {
+    background: #3a78e0;
+  }
+  select {
+    background: #4b8df8;
+  }
+  #output {
+    width: 90%;
+    max-width: 700px;
+    height: 320px;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-family: monospace;
+    background: white;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  #progress {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  /* Ad Container Styles */
+  .ad-container {
+    width: 100%;
+    margin: 20px 0;
+    text-align: center;
+  }
+  
+  /* Floating / Sticky Ad (Bottom-Right) */
+  #floating-ad-container {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    width: 300px;
+    height: 250px;
+    z-index: 9999;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  #floating-ad-container .close-btn {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    #floating-ad-container {
+      width: 250px;
+      height: 250px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>Advanced OCR – Image & PDF to Text</h1>
+
+<!-- Top Leaderboard Ad -->
+<div class="ad-container">
+  <div id="leaderboard-ad" style="width:100%; max-width:728px; margin:0 auto; text-align:center;">
+    <ins class="adsbygoogle"
+         id="leaderboard-slot"
+         style="display:inline-block;width:728px;height:90px"
+         data-ad-client="ca-pub-2708832535381203"></ins>
+  </div>
+</div>
+
+<div id="drop-area">
+  <p>Drag & Drop your <b>Image or PDF</b> here<br>or<br><button id="browseBtn">Upload File</button></p>
+  <input type="file" id="fileElem" accept="image/*,.pdf" />
+  <br><br>
+  <label for="lang">Language:</label>
+  <select id="lang">
+    <option value="eng">English</option>
+    <option value="fra">French</option>
+    <option value="spa">Spanish</option>
+    <option value="ara">Arabic</option>
+    <option value="deu">German</option>
+  </select>
+</div>
+
+<!-- Rectangle Ad -->
+<div class="ad-container">
+  <div id="rectangle-ad" style="width:100%; max-width:300px; margin:20px auto; text-align:center;">
+    <ins class="adsbygoogle"
+         id="rectangle-slot"
+         style="display:inline-block;width:300px;height:250px"
+         data-ad-client="ca-pub-2708832535381203"></ins>
+  </div>
+</div>
+
+<div id="progress"></div>
+
+<textarea id="output" placeholder="Extracted text will appear here..."></textarea>
+<div>
+  <button id="copyBtn">Copy Text</button>
+  <button id="downloadBtn">Download TXT</button>
+</div>
+
+<!-- Bottom Responsive Ad -->
+<div class="ad-container">
+  <div id="responsive-ad" style="width:100%; margin:20px auto; text-align:center;">
+    <ins class="adsbygoogle"
+         id="responsive-slot"
+         style="display:block"
+         data-ad-client="ca-pub-2708832535381203"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  </div>
+</div>
+
+<!-- Mobile Banner Ad -->
+<div class="ad-container">
+  <div id="mobile-banner-ad" style="width:100%; max-width:320px; margin:20px auto; text-align:center;">
+    <ins class="adsbygoogle"
+         id="mobile-slot"
+         style="display:inline-block;width:320px;height:50px"
+         data-ad-client="ca-pub-2708832535381203"></ins>
+  </div>
+</div>
+
+<!-- Floating / Sticky Ad -->
+<div id="floating-ad-container">
+  <span class="close-btn" onclick="document.getElementById('floating-ad-container').style.display='none'">✕</span>
+  <ins class="adsbygoogle"
+       id="floating-slot"
+       style="display:inline-block;width:300px;height:250px"
+       data-ad-client="ca-pub-2708832535381203"></ins>
+</div>
+
+<script>
+  const dropArea = document.getElementById("drop-area");
+  const fileElem = document.getElementById("fileElem");
+  const browseBtn = document.getElementById("browseBtn");
+  const output = document.getElementById("output");
+  const progress = document.getElementById("progress");
+  const langSelect = document.getElementById("lang");
+
+  browseBtn.addEventListener("click", () => fileElem.click());
+
+  dropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropArea.classList.add("dragover");
+  });
+  dropArea.addEventListener("dragleave", () => dropArea.classList.remove("dragover"));
+  dropArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropArea.classList.remove("dragover");
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  });
+
+  fileElem.addEventListener("change", (e) => handleFiles(e.target.files));
+
+  async function handleFiles(files) {
+    const file = files[0];
+    if (!file) return;
+    output.value = "";
+    progress.textContent = "Processing file...";
+
+    if (file.type === "application/pdf") {
+      await extractTextFromPDF(file);
+    } else {
+      await extractTextFromImage(file);
+    }
+  }
+
+  async function extractTextFromImage(file) {
+    try {
+      const lang = langSelect.value;
+      const { data: { text } } = await Tesseract.recognize(file, lang, {
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            progress.textContent = `Recognizing text: ${Math.round(m.progress * 100)}%`;
+          }
+        },
+      });
+      output.value = text.trim();
+      progress.textContent = "OCR completed successfully!";
+    } catch (err) {
+      console.error(err);
+      progress.textContent = "Error during OCR processing.";
+    }
+  }
+
+  async function extractTextFromPDF(file) {
+    const fileReader = new FileReader();
+    fileReader.onload = async function() {
+      const typedarray = new Uint8Array(this.result);
+      const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2.0 });
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        const lang = langSelect.value;
+
+        const { data: { text } } = await Tesseract.recognize(blob, lang, {
+          logger: (m) => {
+            if (m.status === "recognizing text") {
+              progress.textContent = `Page ${i}/${pdf.numPages}: ${Math.round(m.progress * 100)}%`;
+            }
+          },
+        });
+        fullText += text + "\n\n";
+      }
+
+      output.value = fullText.trim();
+      progress.textContent = "PDF OCR completed successfully!";
+    };
+    fileReader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById("copyBtn").addEventListener("click", () => {
+    output.select();
+    document.execCommand("copy");
+    progress.textContent = "Text copied to clipboard.";
+  });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    const blob = new Blob([output.value], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "ocr_text.txt";
+    a.click();
+  });
+  
+  // Ad Management Script
+  (function() {
+    // ----- Slot Pools (using only your provided IDs) -----
+    const slotPools = {
+      top:        ["4330270745"],
+      bottom:     ["8902310269"],
+      leaderboard:["4330270745"],
+      rectangle:  ["6603449987"],
+      square:     ["6709022070"],
+      mobile:     ["6962542631"],
+      responsive: ["6170552754"],
+      floating:   ["5978981067"]
+    };
+
+    // ----- State Tracking -----
+    const indices = {};
+    Object.keys(slotPools).forEach(type => indices[type] = 0);
+
+    // ----- Helper: Push Ad -----
+    function pushAd(adElement) {
+      const width = adElement.offsetWidth;
+      if (width > 0) {
+        adElement.innerHTML = '';
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      } else {
+        setTimeout(() => pushAd(adElement), 500);
+      }
+    }
+
+    // ----- Rotate Function -----
+    function rotateAd(type) {
+      const adElement = document.getElementById(type + (type==="top"||type==="bottom"?"-ad":"-slot"));
+      if (!adElement) return;
+      indices[type] = (indices[type] + 1) % slotPools[type].length;
+      adElement.setAttribute("data-ad-slot", slotPools[type][indices[type]]);
+      pushAd(adElement);
+    }
+
+    // ----- Initialize & Rotate -----
+    Object.keys(slotPools).forEach(type => {
+      rotateAd(type); // initial load
+      setInterval(() => rotateAd(type), 30000); // rotate every 30s (safe even if 1 slot)
+    });
+  })();
+</script>
+</body>
+</html>
